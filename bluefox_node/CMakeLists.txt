@@ -19,7 +19,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # ------------------------------------------------------------------------------------ # 
 # In order the CMake to work properly, path to driver files (downloaded from Matrix 
 # Vision's web site) should be replaced with the path below.
-#rosbuild_untar_file(bluefox_driver.tgz bluefox_drive tests)
+execute_process(COMMAND tar -xf bluefox_driver.tgz bluefox_driver)
+#rosbuild_untar_file(./bluefox_driver.tgz ./bluefox_driver ALL)
 #set(MVIMPACT_DRIVER_DIR $ENV{ROS_WORKSPACE}/drivers/bluefox_driver)
 set(MVIMPACT_DRIVER_DIR bluefox_driver)
 set(BLUEFOX_LIBRARY bluefox_camera)

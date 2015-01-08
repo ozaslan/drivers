@@ -5,6 +5,9 @@
 	-- This node is proven to be working with ???
 	-- It also provides clean interface for modification 
 	of many of the core camera functions.
+
+	NOTE : This node uses the MatrixVision BlueFox drivers.
+	Resort to their official webpage in case of driver problems.
   </description>
   <author>Salih Tolga Ozaslan</author>
   <license>BSD</license>
