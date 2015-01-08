@@ -1,0 +1,104 @@
+<!-- 
+
+-->
+
+<launch>
+
+#### start the onboard controller IMU ##############################
+
+<node pkg   ="bluefox_node"
+      name  ="bluefox0"
+      type  ="bluefox_node"
+      output="screen">
+                         
+  	  <param name="camera_idx"   value="0" />
+	  <param name="camera_name"  value="cam0" />
+	  <param name="exposure_us"  value="20000" />
+	  <param name="hdr_mode"     value="1" />
+	  <param name="gain_dB"		 value="0.1" />
+	  <param name="color_mode"   value="false" />
+	  <param name="fps"          value="30.0" />
+	  <param name="width"        value="640" />
+	  <param name="height"       value="480" />
+	  <param name="fps"          value="60.0" />
+	
+</node>
+
+<node pkg   ="bluefox_node"
+      name  ="bluefox1"
+      type  ="bluefox_node"
+      output="screen">
+                         
+  	  <param name="camera_idx"   value="1" />
+	  <param name="camera_name"  value="cam1" />
+	  <param name="exposure_us"  value="20000" />
+	  <param name="hdr_mode"     value="1" />
+	  <param name="gain_dB"		 value="0.1" />
+	  <param name="color_mode"   value="false" />
+	  <param name="fps"          value="30.0" />
+	  <param name="width"        value="640" />
+	  <param name="height"       value="480" />
+	  <param name="fps"          value="60.0" />
+
+</node>
+
+<node pkg   ="bluefox_node"
+      name  ="bluefox2"
+      type  ="bluefox_node"
+      output="screen">
+                         
+  	  <param name="camera_idx"   value="2" />
+	  <param name="camera_name"  value="cam2" />
+	  <param name="exposure_us"  value="20000" />
+	  <param name="hdr_mode"     value="1" />
+	  <param name="gain_dB"		 value="0.1" />
+	  <param name="color_mode"   value="false" />
+	  <param name="fps"          value="30.0" />
+	  <param name="width"        value="640" />
+	  <param name="height"       value="480" />
+	  <param name="fps"          value="60.0" />
+	
+</node>
+
+
+<node pkg   ="image_view"
+	  name  ="image_view0"
+	  type  ="image_view"
+	  output="screen">
+
+	  <remap from="/image" to="/cam0/image"/>
+</node>
+
+<node pkg   ="image_view"
+	  name  ="image_view1"
+	  type  ="image_view"
+	  output="screen">
+
+	  <remap from="/image" to="/cam1/image"/>
+</node>
+
+<node pkg   ="image_view"
+	  name  ="image_view2"
+	  type  ="image_view"
+	  output="screen">
+
+	  <remap from="/image" to="/cam2/image"/>
+</node>
+
+
+</launch>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

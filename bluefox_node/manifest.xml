@@ -1,0 +1,19 @@
+<package>
+  <description brief="bluefox_node">
+	This node serves as an interface to mvIMPACT
+	camera driver. 
+	-- This node is proven to be working with ???
+	-- It also provides clean interface for modification 
+	of many of the core camera functions.
+  </description>
+  <author>Salih Tolga Ozaslan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bluefox_node</url>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="image_transport"/>
+</package>
+
+

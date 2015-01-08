@@ -1,0 +1,53 @@
+<!-- 
+
+-->
+
+<launch>
+
+#### start the onboard controller IMU ##############################
+
+<node pkg   ="bluefox_node"
+      name  ="bluefox_right"
+      type  ="bluefox_node"
+      output="screen">
+                         
+  	  <param name="camera_idx"      value="0"       />
+  	  <param name="camera_serial"   value="29900213" type="str"/>
+	  <param name="camera_name"     value="camera"  />
+	  <param name="exposure_us"     value="-30000"  />
+	  <param name="hdr_mode"        value="false"   />
+	  <param name="gain_dB"		    value="0.001"   />
+	  <param name="color_mode"      value="true"    />
+	  <param name="fps"             value="60.0"    />
+	  <param name="width"           value="640"     />
+	  <param name="height"          value="480"     />
+	  <param name="print_devices"   value="true"    />
+	  <param name="print_stats"     value="true"    />
+	  <param name="flip_image"      value="false"   />
+	  <rosparam file="$(env ROS_WORKSPACE)/calib_data/ost_bottom.yaml" command="load" />
+</node>
+
+<node pkg   ="image_view"
+	  name  ="image_view"
+	  type  ="image_view"
+	  output="screen">
+
+	  <remap from="/image" to="/camera/image"/>
+</node>
+
+</launch>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
