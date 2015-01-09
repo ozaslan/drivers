@@ -8,10 +8,10 @@
 
 #include <Eigen/Dense>
 
-#include <khex_com/KHexPDCmd.h>
-#include <khex_com/KHexPressMagTempData.h>
-#include <khex_com/KHexRCData.h>
-#include <khex_com/KHexStatusData.h>
+#include <khex_com/KHexCmd.h>
+#include <khex_com/KHexPMT.h>
+#include <khex_com/KHexRC.h>
+#include <khex_com/KHexStatus.h>
 #include <sensor_msgs/Imu.h>
 #include <kQuadInterface.hh>
 
@@ -27,9 +27,9 @@ string dev_path;
 string frame_set;
 ros::Publisher imu_publ;
 ros::Publisher status_publ;
-ros::Publisher press_publ;
+ros::Publisher pmt_publ;
 ros::Publisher rc_publ;
-ros::Subscriber pdcmd_subs;
+ros::Subscriber cmd_subs;
 
 // kQuadInterface is the interface used to send/receive messages
 kQuadInterface kqi;
@@ -42,7 +42,7 @@ list<PressureMagData> pmdata;
 
 // This callback listens to PD commands topic. Low level communication
 // is carried through kQuadInterface functions.
-void pdcmd_callback(const KHexPDCmd &msg);
+void cmd_callback(const KHexCmd &msg);
 // This function is called before the ros loop starts.
 // Parameter server is querried in this function.
 void process_inputs(const ros::NodeHandle &n);
@@ -66,21 +66,21 @@ int main(int argc, char* argv[]){
 	
 	// Connect to the device.
 	if (kqi.Connect(dev_path, baud_rate)){
-		ROS_ERROR("--- KHex IMU ---");
+		ROS_ERROR("--- KHEX COM ---");
 		ROS_ERROR("Could not connect to the device [%s] with baud rate [%d]", dev_path.c_str(), baud_rate);
 		return -1;
 	}
   
 	// Initialize the send thread
 	if (kqi.StartSendThread()){
-		ROS_ERROR("--- KHex IMU ---");
+		ROS_ERROR("--- KHEX COM ---");
 		ROS_ERROR("Could not start the send thread\n");
 	    return -1;
 	}
   
 	// Initialize the receiving thread
 	if (kqi.StartRecvThread()){
-		ROS_ERROR("--- KHex IMU ---");
+		ROS_ERROR("--- KHEX COM ---");
 		ROS_ERROR("Could not start the receive thread\n");
 		return -1;
 	}
@@ -103,8 +103,8 @@ void process_inputs(const ros::NodeHandle &n)
 	// NOTE : Default forward direction of the KHex is not
 	// aligned with the Inspection KHex configuration.
 	// The other option for frame_set is "default". When "inspection_khex"
-	// is selected, raw data is post-processed to align with the khex
-	// coordinate frame.
+	// is selected, raw data is post-processed to align with the 
+	// inspection KHex coordinate frame.
 	n.param("frame_set", frame_set, string("inspection_khex"));
 	n.param("baud_rate", baud_rate, 921600);
 
@@ -120,17 +120,17 @@ void process_inputs(const ros::NodeHandle &n)
 void setup_messaging_interface(ros::NodeHandle &n)
 {
 	imu_publ     = n.advertise<sensor_msgs::Imu>("imu", 10);
-	status_publ  = n.advertise<KHexStatusData>("status", 10);
-	press_publ   = n.advertise<KHexPressMagTempData>("press_mag_temp", 10);
-	rc_publ      = n.advertise<KHexRCData>("rc", 10);
-	pdcmd_subs   = n.subscribe("pdcmd", 10, pdcmd_callback, ros::TransportHints().tcpNoDelay()); 
+	status_publ  = n.advertise<KHexStatus>("status", 10);
+	pmt_publ     = n.advertise<KHexPMT>("pmt", 10);
+	rc_publ      = n.advertise<KHexRC>("rc", 10);
+	cmd_subs     = n.subscribe("cmd", 10, cmd_callback, ros::TransportHints().tcpNoDelay()); 
 
 	ROS_INFO("----------- KHEX COM -------------------------------------------");
 	ROS_INFO("Publishing filtered imu data to <imu>");
 	ROS_INFO("Publishing robot status to <status>");
-	ROS_INFO("Publishing pressure/magnetometer/temperature to <press_mag_temp>");
+	ROS_INFO("Publishing pressure/magnetometer/temperature to <pmt>");
 	ROS_INFO("Publishing RC data to <rc>");
-	ROS_INFO("Listening to <pdcmd> for commands");
+	ROS_INFO("Listening to <cmd> for commands");
 	ROS_INFO("----------------------------------------------------------------");
 }
 
@@ -174,10 +174,10 @@ void loop(const ros::NodeHandle &n)
 }
 
 void publish_data(){
-	static sensor_msgs::Imu		khex_if;
-	static KHexRCData			khex_rc;
-	static KHexPressMagTempData khex_pmt;
-	static KHexStatusData       khex_sta;
+	static sensor_msgs::Imu	khex_if;
+	static KHexRC			khex_rc;
+	static KHexPMT          khex_pmt;
+	static KHexStatus       khex_sta;
 	static double g = 9.81;
 	static MatrixXd R(3, 3);
 
@@ -214,7 +214,7 @@ void publish_data(){
 
 		double tr = R(0, 0) + R(1, 1) + R(2, 2);
 		double qw, qx, qy, qz, S;
-
+		// ### Should start using 'utilities'
 		if (tr > 0) { 
 			S = sqrt(tr + 1.0) * 2; // S=4*qw 
 			qw = 0.25 * S;
@@ -310,7 +310,7 @@ void publish_data(){
 			khex_pmt.mag[2] =  pmt.mz;
 		}
 
-		press_publ.publish(khex_pmt);
+		pmt_publ.publish(khex_pmt);
 	}
 
 	if(qdata.size() !=0){
@@ -329,13 +329,13 @@ void publish_data(){
 	}
 }
 
-void pdcmd_callback(const KHexPDCmd &msg){
+void cmd_callback(const KHexCmd &msg){
 	static unsigned char quadType = 0; //0 for standard and Nano+, 1 for Nano only
 	static unsigned char channel  = 1; //zigbee channel, does not matter for uart connection
 
 	// ### Have to handle SendQuadCmd3 and SendQuadCmd4 alternatives as well.
 	if(debug_mode){
-		ROS_INFO("KHEX COM : Got PDCmd Message");
+		ROS_INFO("KHEX COM : Got KHexCmd Message");
 		ROS_INFO("[id, T, R, P, Y] = [%d, %.3f, %.3f, %.3f, %.3f]", robot_id, msg.thrust, msg.roll, msg.pitch, msg.yaw);
 	}
 
