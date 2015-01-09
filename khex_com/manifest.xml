@@ -1,0 +1,19 @@
+<package>
+  <description brief="khex_com">
+	This package is a ROS wrapper for the KMel's
+	on-board sensor pack  driver base. It is 
+	responsible for publishing IMU, pressure, robot 
+    status and RC commands and listen to controller
+	commands from the auto-controller. It also 
+	defines a number of message types.
+  </description>
+  <author>ozaslan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/khex_imu</url>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+  <rosdep name="eigen" />
+</package>
+
+
