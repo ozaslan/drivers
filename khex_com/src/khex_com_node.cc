@@ -8,15 +8,15 @@
 
 #include <Eigen/Dense>
 
-#include <khex_com/KHexCmd.h>
-#include <khex_com/KHexPMT.h>
-#include <khex_com/KHexRC.h>
-#include <khex_com/KHexStatus.h>
+#include <com_msgs/PDCmd.h>
+#include <com_msgs/PMT.h>
+#include <com_msgs/RC.h>
+#include <com_msgs/Status.h>
 #include <sensor_msgs/Imu.h>
 #include <kQuadInterface.hh>
 
 using namespace std;
-using namespace khex_com;
+//using namespace com_msgs;
 using Eigen::MatrixXd;
 
 int robot_id = 0;
@@ -42,7 +42,7 @@ list<PressureMagData> pmdata;
 
 // This callback listens to PD commands topic. Low level communication
 // is carried through kQuadInterface functions.
-void cmd_callback(const KHexCmd &msg);
+void cmd_callback(const com_msgs::PDCmd &msg);
 // This function is called before the ros loop starts.
 // Parameter server is querried in this function.
 void process_inputs(const ros::NodeHandle &n);
@@ -120,9 +120,9 @@ void process_inputs(const ros::NodeHandle &n)
 void setup_messaging_interface(ros::NodeHandle &n)
 {
 	imu_publ     = n.advertise<sensor_msgs::Imu>("imu", 10);
-	status_publ  = n.advertise<KHexStatus>("status", 10);
-	pmt_publ     = n.advertise<KHexPMT>("pmt", 10);
-	rc_publ      = n.advertise<KHexRC>("rc", 10);
+	status_publ  = n.advertise<com_msgs::Status>("status", 10);
+	pmt_publ     = n.advertise<com_msgs::PMT>("pmt", 10);
+	rc_publ      = n.advertise<com_msgs::RC>("rc", 10);
 	cmd_subs     = n.subscribe("cmd", 10, cmd_callback, ros::TransportHints().tcpNoDelay()); 
 
 	ROS_INFO("----------- KHEX COM -------------------------------------------");
@@ -175,9 +175,9 @@ void loop(const ros::NodeHandle &n)
 
 void publish_data(){
 	static sensor_msgs::Imu	khex_if;
-	static KHexRC			khex_rc;
-	static KHexPMT          khex_pmt;
-	static KHexStatus       khex_sta;
+	static com_msgs::RC		khex_rc;
+	static com_msgs::PMT	khex_pmt;
+	static com_msgs::Status khex_sta;
 	static double g = 9.81;
 	static MatrixXd R(3, 3);
 
@@ -295,7 +295,8 @@ void publish_data(){
 		khex_pmt.header.frame_id = "body";
 	
 		khex_pmt.pressure    = pmt.pressure;
-		khex_pmt.temperature = pmt.temperature;
+		khex_pmt.celcius     = pmt.temperature;
+		khex_pmt.fahr		 = 0;
 		khex_pmt.baro_zpos   = pmt.baro_zpos;
 
 		if(frame_set == "default"){
@@ -329,7 +330,7 @@ void publish_data(){
 	}
 }
 
-void cmd_callback(const KHexCmd &msg){
+void cmd_callback(const com_msgs::PDCmd &msg){
 	static unsigned char quadType = 0; //0 for standard and Nano+, 1 for Nano only
 	static unsigned char channel  = 1; //zigbee channel, does not matter for uart connection
 

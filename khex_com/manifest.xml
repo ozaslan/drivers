@@ -13,6 +13,7 @@
   <url>http://ros.org/wiki/khex_imu</url>
   <depend package="roscpp"/>
   <depend package="sensor_msgs"/>
+  <depend package="com_msgs"/>
   <rosdep name="eigen" />
 </package>
 
