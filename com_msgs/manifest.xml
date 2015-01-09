@@ -1,0 +1,21 @@
+<package>
+  <description brief="com_msgs">
+	This node provides a set of message definitions
+	used by onboard hardware in common. These include
+	pressure, magnetometer, temperature sensor,	controller,
+	status and voltage messages. Collecting such messages under
+	this single node unites dependencies to multiple nodes.
+  </description>
+  <author>Salih Tolga Ozaslan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/com_msgs</url>
+  <depend package="roscpp"/>
+
+  <export>
+	<cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -l${prefix}"/> 
+  </export>
+
+</package>
+
+
