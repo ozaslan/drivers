@@ -340,4 +340,5 @@ void cmd_callback(const KHexCmd &msg){
 	}
 
 	kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.roll, msg.pitch, msg.yaw);
+	// ### Currently I cannot change the onboard coefficients. Thus kp, kd parameters in the message does not affect.
 }
