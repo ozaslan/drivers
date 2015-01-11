@@ -13,7 +13,7 @@
   <depend package="roscpp"/>
 
   <export>
-	<cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -l${prefix}"/> 
+	<cpp cflags="-I${prefix}/include" /> 
   </export>
 
 </package>
