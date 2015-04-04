@@ -1,3 +1,5 @@
--- Implement a common_messages node. 
+-- Think about additional message types 
+
+++ Implement a common_messages node. 
 This should have all the possible message types that can be sent/received to/from onboard controller.
 The goal is to keep higher level nodes unaffected from platform changes.

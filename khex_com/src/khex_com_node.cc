@@ -279,7 +279,22 @@ void publish_data(){
 		khex_rc.right_rl = rc.data[1];
 		khex_rc.left_fb  = rc.data[0];
 		khex_rc.left_rl  = rc.data[3];
-		
+
+		// Unify RC data range to [0, 1000].
+		double right_rl_span = (870 - 153);
+		double right_rl_mid  = (870 + 153) / 2.0;
+		double right_fb_span = (869 - 152);
+		double right_fb_mid  = (869 + 152) / 2.0;
+		double left_rl_span = (870 - 153);
+		double left_rl_mid  = (870 + 153) / 2.0;
+		double left_fb_span = (869 - 171);
+		double left_fb_mid  = (869 + 171) / 2.0;
+
+		khex_rc.right_rl = (khex_rc.right_rl - right_rl_mid) / right_rl_span * 1000 + 500;
+		khex_rc.right_fb = 1000 - ((khex_rc.right_fb - right_fb_mid) / right_fb_span * 1000 + 500);
+		khex_rc.left_rl  = (khex_rc.left_rl - left_rl_mid)  / left_rl_span * 1000 + 500;
+		khex_rc.left_fb  = 1000 - ((khex_rc.left_fb - left_fb_mid)  / left_fb_span * 1000 + 500);
+
 		// First two values correspond to switches on the left
 		// of the RC.
 		for(int i = 0 ; i < 6 ; i++)
@@ -339,7 +354,10 @@ void cmd_callback(const com_msgs::PDCmd &msg){
 		ROS_INFO("KHEX COM : Got KHexCmd Message");
 		ROS_INFO("[id, T, R, P, Y] = [%d, %.3f, %.3f, %.3f, %.3f]", robot_id, msg.thrust, msg.roll, msg.pitch, msg.yaw);
 	}
-
-	kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.roll, msg.pitch, msg.yaw);
+	
+	if(frame_set == "inspection_khex")
+		kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.pitch, msg.roll, msg.yaw);
+	else
+		kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.roll, msg.pitch, msg.yaw);
 	// ### Currently I cannot change the onboard coefficients. Thus kp, kd parameters in the message does not affect.
 }
