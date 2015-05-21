@@ -246,7 +246,8 @@ void publish_data(){
 		// and flipping their directions.
 		if(frame_set == "inspection_khex"){
 			std::swap(qx, qy);
-			qy *= -1;
+      //qy *= -1;
+      qx *= -1;
 			std::swap(ifd.wroll, ifd.wpitch);
 			ifd.wroll *= -1;
 			std::swap(ifd.ax, ifd.ay);
