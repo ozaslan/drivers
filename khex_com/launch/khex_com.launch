@@ -1,0 +1,34 @@
+<!-- 
+Example launch file: launches the khex_imu driver node
+-->
+
+<launch>
+
+<node pkg="khex_com"
+		name="khex_com" 
+		type="khex_com" 
+		output="screen">
+
+		<param name="debug_mode"	value="FALSE"/>
+	    <param name="refresh_rate"	value="300.0"/>  
+	    <param name="dev_path"      value="/dev/ttyUSB0"/>
+	    <param name="frame_set"		value="inspection_khex"/>
+	    <param name="baud_rate"     value="921600"/>
+</node>
+
+</launch>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
