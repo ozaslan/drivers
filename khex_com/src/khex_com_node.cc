@@ -97,7 +97,7 @@ int main(int argc, char* argv[]){
 void process_inputs(const ros::NodeHandle &n)
 {
 	n.param("dev_path", dev_path, string("/dev/ttyUSB0"));
-	n.param("refresh_rate", refresh_rate, 100);
+	n.param("refresh_rate", refresh_rate, 300);
 	n.param("debug_mode", debug_mode, false);
 
 	// NOTE : Default forward direction of the KHex is not
@@ -356,7 +356,7 @@ void cmd_callback(const com_msgs::PDCmd &msg){
 	}
 	
 	if(frame_set == "inspection_khex")
-		kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.pitch, msg.roll, msg.yaw);
+		kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.pitch, -msg.roll, msg.yaw);
 	else
 		kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.roll, msg.pitch, msg.yaw);
 	// ### Currently I cannot change the onboard coefficients. Thus kp, kd parameters in the message does not affect.

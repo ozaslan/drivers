@@ -11,6 +11,8 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 
 rosbuild_init()
 
+find_package(cmake_modules REQUIRED)
+
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 
@@ -29,7 +31,8 @@ rosbuild_genmsg()
 
 # Add the KMel library include and library directories
 INCLUDE_DIRECTORIES(./khex_driver_base/include/)
-LINK_DIRECTORIES(./khex_driver_base/)
+LINK_DIRECTORIES(./khex_driver_base)
+LINK_DIRECTORIES(./khex_driver_base/build)
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
