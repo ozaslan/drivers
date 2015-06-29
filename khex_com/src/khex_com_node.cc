@@ -357,6 +357,7 @@ void cmd_callback(const com_msgs::PDCmd &msg){
 		ROS_INFO("[id, T, R, P, Y] = [%d, %.3f, %.3f, %.3f, %.3f]", robot_id, msg.thrust, msg.roll, msg.pitch, msg.yaw);
 	}
 	
+
 	if(frame_set == "inspection_khex")
 		kqi.SendQuadCmd1(robot_id, quadType, channel, msg.thrust, msg.pitch, -msg.roll, msg.yaw);
 	else
