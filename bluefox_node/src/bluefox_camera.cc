@@ -2,6 +2,7 @@
 // Author : Salih Tolga Ozaslan            //
 // Year   : June 2014                      //
 //                                         //
+
 #include "bluefox_camera.hh"
 #include <iostream>
 #include <mvIMPACT_CPP/mvIMPACT_acquire.h>

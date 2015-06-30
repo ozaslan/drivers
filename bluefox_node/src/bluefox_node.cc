@@ -2,6 +2,7 @@
 // Author : Salih Tolga Ozaslan            //
 // Year   : June 2014                      //
 //                                         //
+
 #include "bluefox_camera.hh"
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>

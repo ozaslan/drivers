@@ -2,6 +2,7 @@
 // Author : Salih Tolga Ozaslan            //
 // Year   : June 2014                      //
 //                                         //
+
 #ifndef __BLUEFOX_CAMERA_HH__
 #define __BLUEFOX_CAMERA_HH__
 
