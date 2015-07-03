@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <numeric>
 #include <list>
 #include <stdlib.h>
 
@@ -15,6 +16,8 @@
 #include <com_msgs/Status.h>
 #include <sensor_msgs/Imu.h>
 #include <kQuadInterface.hh>
+
+#include <cpu_usage.hh>
 
 using namespace std;
 //using namespace com_msgs;
@@ -55,6 +58,8 @@ void loop(const ros::NodeHandle &n);
 // Upon retreiving data through kQuadInterface, ros topics
 // are populated and pushed into the messaging queue.
 void publish_data();
+
+CpuUsage cpu_loads;
 
 int main(int argc, char* argv[]){
 	
@@ -341,7 +346,8 @@ void publish_data(){
 		khex_sta.current  = s.current;
 		// ### Cpu load part needs some effort. Left to the
 		// future versions.
-		khex_sta.cpu_load = 0;
+		vector<float> loads = cpu_loads.get_usage();
+		khex_sta.cpu_load = std::accumulate(loads.begin(), loads.end(), 0) / 4;
 
 		status_publ.publish(khex_sta);
 	}
