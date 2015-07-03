@@ -1,0 +1,15 @@
+*** Installing bluefox Drivers
+Go to Matrix-Vision site, download the driver. They have very nice script that sets up everything. 
+But I couldn't manage to work camera on the quadrotor neither the to S-mount cameras on the MEAM
+620 quadrotors. However Frank's camera worked seamlessly. There are weird thing with these cameras
+which I cannot resolve.
+*** Installing IDS uEye Drive Installation
+Download from IDS webpage the drivers. I have registered to get access to the download.
+User name is my seas mail address and the password is the one starts with 30.
+*** Installation of ueye node
+Package details are given in  http://wiki.ros.org/ueye_cam.
+Source is available from git and the address was https://github.com/anqixu/ueye_cam.
+Packages similar to this one, that is, other hardware drivers are stored under
+the directory 'drivers' in my ros workspace root. Now I am going to run executables
+which come with the package to see if the code is compatible with UI1220-SE
+
