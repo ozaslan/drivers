@@ -1,0 +1,42 @@
+<!-- 
+
+-->
+
+<launch>
+
+#### Start the bluefox frame grabbers  ##############################
+
+<node pkg   ="bluefox_node"
+      name  ="bluefox0"
+      type  ="bluefox_node"
+      output="screen">
+                         
+  	  <param name="camera_idx"   value="0" />
+	  <param name="camera_serial" value="29900207" type="str"/>
+	  <param name="camera_name"  value="cam0" />
+	  <param name="exposure_us"  value="20000" />
+	  <param name="hdr_mode"     value="1" />
+	  <param name="gain_dB"		 value="0.1" />
+	  <param name="color_mode"   value="false" />
+	  <param name="fps"          value="40.0" />
+	  <param name="width"        value="640" />
+	  <param name="height"       value="480" />
+	
+</node>
+
+</launch>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

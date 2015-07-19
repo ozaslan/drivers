@@ -78,38 +78,6 @@
 	
 </node>
 
-<node pkg   ="image_view"
-	  name  ="image_view0"
-	  type  ="image_view"
-	  output="screen">
-
-	  <remap from="/image" to="/cam0/image"/>
-</node>
-
-<node pkg   ="image_view"
-	  name  ="image_view1"
-	  type  ="image_view"
-	  output="screen">
-
-	  <remap from="/image" to="/cam1/image"/>
-</node>
-
-<node pkg   ="image_view"
-	  name  ="image_view2"
-	  type  ="image_view"
-	  output="screen">
-
-	  <remap from="/image" to="/cam2/image"/>
-</node>
-
-<node pkg   ="image_view"
-	  name  ="image_view3"
-	  type  ="image_view"
-	  output="screen">
-
-	  <remap from="/image" to="/cam3/image"/>
-</node>
-
 </launch>
 
 
