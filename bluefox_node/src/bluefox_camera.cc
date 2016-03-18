@@ -108,7 +108,7 @@ BlueFoxCamera::BlueFoxCamera(){
 	_stat        = NULL;
 	_request     = NULL;
 	_irc         = NULL;
-	_timeout_ms  = 2000;
+	_timeout_ms  = 1;
 	_device_initialized = false;
 }
 

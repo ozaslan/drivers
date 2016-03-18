@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <sensor_msgs/CameraInfo.h>
+#include <calib_params.hh>
 //#include "yaml-cpp/yaml.h"
 
 // ### TODO List
@@ -56,6 +57,9 @@ bool    _print_devices;
 bool    _print_stats;
 bool    _flip_image;
 sensor_msgs::CameraInfo _camInfo;
+int		_aoi_x		, _aoi_y, 
+		_aoi_width	, _aoi_height;
+string _calib_file;
 
 int process_inputs(const ros::NodeHandle &n)                                                                                                                           
 {
@@ -77,33 +81,44 @@ int process_inputs(const ros::NodeHandle &n)
 	n.param("print_stats"  , _print_stats  , false);
 	n.param("flip_image"   , _flip_image   , false);
 	n.param("camera_serial", _cam_serial   , string(""));
+	n.param("aoi_x"		   , _aoi_x        , -1);
+	n.param("aoi_y"		   , _aoi_y        , -1);
+	n.param("aoi_width"	   , _aoi_width    , -1);
+	n.param("aoi_height"   , _aoi_height   , -1);
+	n.param("calib_file"   , _calib_file   , string(""));
 
-	double image_width, image_height;
-	n.param("distortion_model", _camInfo.distortion_model, string(""));
-	n.param("image_width" , image_width , 0.0);
-	n.param("image_height", image_height, 0.0);
-	_camInfo.width  = image_width;
-	_camInfo.height = image_height;
+	// Load the camera calibration file and populate the camera info message.	
+	CameraCalibParams params;
+	params.load(_calib_file);
 
-	vector<double> temp;
+	_camInfo.width  = _width;
+	_camInfo.height = _height;
 
-	n.getParam("distortion_coefficients/data", _camInfo.D);
+	_camInfo.distortion_model = params.dist_model;
+	_camInfo.D = params.dist_coeffs;
+	for(int r = 0 ; r < 3 ; r++){
+		for(int c = 0 ; c < 3 ; c++){
+		_camInfo.K[r * 3 + c] = params.camera_matrix.at<double>(r, c);
+		_camInfo.R[r * 3 + c] = 0;
+		}
+	}
+	_camInfo.R[0] = _camInfo.R[4] = _camInfo.R[8] = 1;
 	
-	n.getParam("camera_matrix/data"         , temp);
-	for(int i = 0 ; i < (int)temp.size() ; i++)
-		_camInfo.K[i] = temp[i];
-	temp.clear();
+	for(int r = 0 ; r < 3 ; r++){
+		for(int c = 0 ; c < 4 ; c++){
+		_camInfo.P[r * 4 + c] = params.projection_matrix.at<double>(r, c);
+		}
+	}
 
-	n.getParam("rectification_matrix/data"  , temp);
-	for(int i = 0 ; i < (int)temp.size() ; i++)
-		_camInfo.R[i] = temp[i];
-	temp.clear();
+	_camInfo.binning_x = 0;
+	_camInfo.binning_y = 0;
+	_camInfo.roi.x_offset	= 0;
+	_camInfo.roi.y_offset	= 0;
+	_camInfo.roi.height		= _height;
+	_camInfo.roi.width		= _width;
+	_camInfo.roi.do_rectify	= false;
 
-	n.getParam("projection_matrix/data"     , temp);
-	for(int i = 0 ; i < (int)temp.size() ; i++)
-		_camInfo.P[i] = temp[i];
-
-  
+	// ------------------------------------------------------------------- //
     ROS_INFO(" ---------------- BLUEFOX NODE ------------------");
 	ROS_INFO("[trigger_mode] ----- : [%d]", _trigger_mode);
     ROS_INFO("[camera_idx] ------- : [%d]", _cam_idx);
@@ -122,6 +137,9 @@ int process_inputs(const ros::NodeHandle &n)
 	ROS_INFO("[print_devices] ---- : [%s]"	 , _print_devices ? "TRUE" : "FALSE");
 	ROS_INFO("[print_stats] ------ : [%s]"	 , _print_stats ? "TRUE" : "FALSE");
 	ROS_INFO("[flip_image] ------- : [%s]"	 , _flip_image ? "TRUE" : "FALSE");
+	ROS_INFO("AOI-[x, y, w, h] --- : [%d, %d, %d, %d]"	, _aoi_x, _aoi_y, _aoi_width, _aoi_height);
+	ROS_INFO("Camera calibration parameters : ");
+	params.print();
     ROS_INFO(" ------------------------------------------------");
 	return 0;
 }
@@ -135,18 +153,21 @@ int main(int argc, char* argv[]){
 	process_inputs(nh);
 	
 	image_transport::ImageTransport it(nh);
-	string topic_name = "/" + _camera_name + "/image";
+	string topic_name = "/" + _camera_name + "/image_raw";
 	image_transport::Publisher image_publ = it.advertise(topic_name.c_str(), 1);
-	ros::Publisher camInfo_publ = nh.advertise<sensor_msgs::CameraInfo>("/camera_info", 1);
+	ros::Publisher camInfo_publ = nh.advertise<sensor_msgs::CameraInfo>("/" + _camera_name + "/camera_info", 1);
 
 	if(_print_devices)
 		bfcam.print_available_devices(false, false);
 
 	cv::Mat frame;
-	if(_cam_serial == "")
+	if(_cam_serial == ""){
+		ROS_INFO("Camera serial # not provided. Starting camera using the index value.");
 		bfcam.open(_cam_idx);
-	else 
+	} else {
+		ROS_INFO("Starting the camera with the serial # : %s", _cam_serial.c_str());
 		bfcam.open(_cam_serial);
+	}
 
 	bfcam.set_trigger_source(_trigger_mode);
 	bfcam.set_hdr_mode(_hdr_mode);
@@ -155,11 +176,13 @@ int main(int argc, char* argv[]){
 	bfcam.set_pixel_clock_rate(_clock_rate);
 	bfcam.set_exposure_us(_exposure_us);
 	bfcam.set_frame_delay_us(_frame_delay);
+	bfcam.set_aoi(_aoi_x, _aoi_y, _aoi_width, _aoi_height);
 
 	int seq = 0;
 
-		bfcam.set_binning_mode(0,0,0);
+	bfcam.set_binning_mode(0,0,0);
 	ros::Rate rate(_fps);
+
 	while (nh.ok()) {
 		bfcam.grab_frame(frame, _print_stats);
 	
@@ -167,31 +190,6 @@ int main(int argc, char* argv[]){
 		cv_image.header.seq = seq++;
 		cv_image.header.frame_id = _camera_name;
 		cv_image.header.stamp    = ros::Time::now();
-
-		/*
-		cout << "D = [";
-		for(int i = 0 ; i < _camInfo.D.size() ; i++)
-			cout <<_camInfo.D[i] << " ";
-		cout << "]" << endl;
-		
-		cout << "K = [";
-		for(int i = 0 ; i < sizeof(_camInfo.K)/sizeof(double) ; i++)
-			cout <<_camInfo.K[i] << " ";
-		cout << "]" << endl;
-
-		cout << "R = [";
-		for(int i = 0 ; i < sizeof(_camInfo.R)/sizeof(double) ; i++)
-			cout <<_camInfo.R[i] << " ";
-		cout << "]" << endl;
-
-		cout << "P = [";
-		for(int i = 0 ; i < sizeof(_camInfo.P)/sizeof(double) ; i++)
-			cout <<_camInfo.P[i] << " ";
-		cout << "]" << endl;
-
-		cout << "Image width  = " << _camInfo.width  << endl;
-		cout << "Image height = " << _camInfo.height << endl;
-		*/
 
 		if(frame.rows != _height || frame.cols != _width)
 			resize(frame, frame, Size(_width, _height));
@@ -217,65 +215,10 @@ int main(int argc, char* argv[]){
 			cv_image.encoding = "rgb8";
 		}
 
-		/*
-		//236.264331 301.249724
-		cv::Mat cameraMatrix = (cv::Mat_<double>(3,3) << 300, 0, 301.249724, 0, 300, 236.264331, 0, 0, 1);
-		cv::Mat orig = cv_image.image.clone();
-		cv::Mat distCoeffs   = (cv::Mat_<double>(9,1) << 1.61988095450115,
-														 5.04190166490635,
-														 0.0518678741019532,
-														-8.83325937878004,
-														9.49948543965019,
-														32.6590540531721,
-														1.55268768534033,
-														205.958879932563,
-														362.115924320006);
-		cv::Mat map1, map2;
-		vector<cv::Mat> idxs(2);
-		idxs[0] = cv::Mat(orig.rows, orig.cols, CV_32FC1);
-		idxs[1] = cv::Mat(orig.rows, orig.cols, CV_32FC1);
-		for(int r = 0 ; r < orig.rows ; r++){
-			for(int c = 0; c < orig.cols; c++){
-				idxs[0].at<float>(r, c) = c;
-				idxs[1].at<float>(r, c) = r;
-			}
-		}
-		
-		merge(idxs, map1);
-		for(int r = 0 ; r < orig.rows ; r++){
-			for(int c = 0; c < orig.cols; c++){
-				double dy = r - 236.264331;
-				double dx = c - 301.249724;
-				double norm  = sqrt(pow(dx, 2) + pow(dy, 2));
-				if(norm == 0)
-					norm = 0.000001;
-				double theta = atan(-80/norm);
-				double rho = 0;
-				for(int n = 0 ; n < distCoeffs.rows ; n++)
-					rho += distCoeffs.at<double>(n) * pow(theta, distCoeffs.rows - n - 1);
-				double new_x = dx / norm * rho;
-				double new_y = dy / norm * rho;
-				idxs[0].at<float>(r, c) = new_x + 301.249724;
-				idxs[1].at<float>(r, c) = new_y + 236.264331;
-			}
-		}
-		merge(idxs, map1);
-		
-		remap(orig, cv_image.image, map1, map2, INTER_LINEAR, BORDER_CONSTANT);
-
-		//cv::Mat cameraMatrix = (cv::Mat_<double>(3,3) << 300, 0, 301.249724, 0, 300, 236.264331, 0, 0, 1);
-		//cv::Mat orig = cv_image.image.clone();
-		//cv::Mat distCoeffs   = (cv::Mat_<double>(8,1) << -2.484016e+02, 0.000000e+00, 1.668047e-03, -1.828955e-06, 6.957903e-09, 0.000000e+00, -1.383858e-15, 0);
-		//undistort(orig, cv_image.image, cameraMatrix, distCoeffs );
-		*/
 		image_publ.publish(cv_image.toImageMsg());
-		_camInfo.header.seq++;
-		_camInfo.header.stamp = ros::Time::now();
-		_camInfo.header.frame_id = "camera";
-		// ### If there is a way, I should better put the name of the node as the frame_id.
+		_camInfo.header = cv_image.header;
 		camInfo_publ.publish(_camInfo);
 	    
-		ros::spinOnce();
 		rate.sleep();
 	}
 
