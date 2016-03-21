@@ -33,23 +33,23 @@ int BlueFoxCamera::_print_device_details(Device *pDev, int idx, bool print_detai
 
 	COUT << "Device[" << idx << "] : " << ENDL;
 	cout << "-- Is in Use : " << (pDev->isInUse() ? "TRUE" : "FALSE")
-		 << " | Is Open : " << (pDev->isOpen() ? "TRUE" : "FALSE") << endl; 
+		<< " | Is Open : " << (pDev->isOpen() ? "TRUE" : "FALSE") << endl; 
 	cout << "-- ID : " << pDev->deviceID.readS() 
-		 << " | Product : " << pDev->product.readS() 
-		 << " | Family : " << pDev->family.readS() 
-		 << " | Class : " << pDev->deviceClass.readS() << endl; 
+		<< " | Product : " << pDev->product.readS() 
+		<< " | Family : " << pDev->family.readS() 
+		<< " | Class : " << pDev->deviceClass.readS() << endl; 
 	cout << "-- Version : " << pDev->deviceVersion.readS()
-		 << " | Serial : " << pDev->serial.readS()
-		 << " | Interface Layout : " << pDev->interfaceLayout.readS()
-		 << " | State : " << pDev->state.readS() << endl;
+		<< " | Serial : " << pDev->serial.readS()
+		<< " | Interface Layout : " << pDev->interfaceLayout.readS()
+		<< " | State : " << pDev->state.readS() << endl;
 	cout << "-- Firmware Version : " << pDev->firmwareVersion.readS()
-		 << " | Granted Access : " << (pDev->grantedAccess.isValid() ? pDev->grantedAccess.readS() : "Property not supported") << endl;
+		<< " | Granted Access : " << (pDev->grantedAccess.isValid() ? pDev->grantedAccess.readS() : "Property not supported") << endl;
 	cout << "-- Acquisition Start/Stop Behaviour : " << pDev->acquisitionStartStopBehaviour.readS() << endl;
 	cout << "-- Capabilities : " << pDev->capabilities.readS() << endl;
 	cout << "-- Custom Data Directory : \"" << pDev->customDataDirectory.readS() << "\"" 
-		 << " | Default Request Count : " << pDev->defaultRequestCount.readS() << endl;
+		<< " | Default Request Count : " << pDev->defaultRequestCount.readS() << endl;
 	cout << "-- Desired Access : " << (pDev->desiredAccess.isValid() ? pDev->desiredAccess.readS() : "Property not supported")
-		 << " | Result Queue Count : " << pDev->resultQueueCount.readS() << endl;
+		<< " | Result Queue Count : " << pDev->resultQueueCount.readS() << endl;
 
 	if(print_detailed){
 		bool is_open = pDev->isOpen();
@@ -57,13 +57,13 @@ int BlueFoxCamera::_print_device_details(Device *pDev, int idx, bool print_detai
 		Component  c = ComponentIterator(locator.searchbase_id()).firstChild();
 		_print_component_list(c, 0, print_invisible);
 		locator = DeviceComponentLocator(pDev, dltRequest);
-		 c = ComponentIterator(locator.searchbase_id()).firstChild();
+		c = ComponentIterator(locator.searchbase_id()).firstChild();
 		_print_component_list(c, 0, print_invisible);
 		locator = DeviceComponentLocator(pDev, dltSystemSettings);
-		 c = ComponentIterator(locator.searchbase_id()).firstChild();
+		c = ComponentIterator(locator.searchbase_id()).firstChild();
 		_print_component_list(c, 0, print_invisible);
 		locator = DeviceComponentLocator(pDev, dltInfo);
-		 c = ComponentIterator(locator.searchbase_id()).firstChild();
+		c = ComponentIterator(locator.searchbase_id()).firstChild();
 		_print_component_list(c, 0, print_invisible);
 		if(is_open == false)
 			pDev->close();
@@ -108,7 +108,7 @@ BlueFoxCamera::BlueFoxCamera(){
 	_stat        = NULL;
 	_request     = NULL;
 	_irc         = NULL;
-	_timeout_ms  = 1;
+	_timeout_ms  = 0;
 	_device_initialized = false;
 }
 
@@ -177,7 +177,7 @@ int BlueFoxCamera::open(string serial) {
 			_pDev->open();
 			_device_serial = serial;
 			_device_idx    = -1;
-				if(_initialize_device() < 0)
+			if(_initialize_device() < 0)
 				return -1;
 			else
 				return 0;
@@ -207,9 +207,9 @@ int BlueFoxCamera::close(){
 	if(_settings != NULL)
 		delete _settings;
 	_settings = NULL;
-	
+
 	_device_initialized = false;
-	
+
 	return 0;
 }
 
@@ -296,7 +296,7 @@ int BlueFoxCamera::_initialize_device(){
 int BlueFoxCamera::_copy_image(cv::Mat &frame){
 	int pixel_pitch = _request->imagePixelPitch.read();
 	int width, height;
-	
+
 	width  = _request->imageWidth.read();
 	height = _request->imageHeight.read();
 
@@ -306,7 +306,7 @@ int BlueFoxCamera::_copy_image(cv::Mat &frame){
 	//namedWindow("win");
 
 	frame = cv::Mat(height, width, CV_8UC(pixel_pitch));
-		
+
 	memcpy(frame.data, _request->imageData.read(), _request->imageSize.read());
 
 	//imshow("win", frame);
@@ -329,6 +329,8 @@ int BlueFoxCamera::print_stats(){
 	return 0;
 }
 
+#include <ros/ros.h>
+
 int BlueFoxCamera::grab_frame(cv::Mat &frame, bool printstats){
 	static int requestNr;
 	if(_device_initialized == false)
@@ -337,18 +339,23 @@ int BlueFoxCamera::grab_frame(cv::Mat &frame, bool printstats){
 			return -1;
 		}
 
-	requestNr = _fi->imageRequestWaitFor(_timeout_ms);
+	requestNr = _fi->imageRequestWaitFor(0);
+
+	//cout << "Req count : " << _fi->requestCount() << endl;
+
 	if(_fi->isRequestNrValid(requestNr)){
 		_request = _fi->getRequest(requestNr);
-		//cout << ">>> Got the request with number : " << requestNr << endl;
-	} else
+	} else {
 		_request = NULL;
+	}
 
 	if(_request == NULL){
-		cout << "*** Image request failed with error : " << requestNr  << endl;
-		cout << "*** Error description : " << ImpactAcquireException::getErrorCodeAsString(requestNr) << endl;
-		cout << "*** This might be due to (1) small timeout duration (2) device is unplugged" << endl;
-		cout << "*** (3) exposure time is too long" << endl;
+		/*
+		   cout << "*** Image request failed with error : " << requestNr  << endl;
+		   cout << "*** Error description : " << ImpactAcquireException::getErrorCodeAsString(requestNr) << endl;
+		   cout << "*** This might be due to (1) small timeout duration (2) device is unplugged" << endl;
+		   cout << "*** (3) exposure time is too long" << endl;
+		 */
 		return -1;
 	}
 
@@ -358,17 +365,20 @@ int BlueFoxCamera::grab_frame(cv::Mat &frame, bool printstats){
 		_fi->getCurrentCaptureBufferLayout(*_irc, bufferSize, bufferAlignment);
 
 		_copy_image(frame);
-	
+
 		_request->unlock();
 		_fi->imageRequestSingle();
-		
+
 	} else {
-		cout << "*** Image request failed with error : " << _request->requestResult.readS() << endl;
-	    cout << "*** This problem is usually due to the USB port." << endl;
-		cout << "*** Try using a USB2 port instead of USB3." << endl;
-		cout << "*** If running in the external trigger mode, slow trigger signals may cause this." << endl;
+		if(_timeout_ms > 0){
+			cout << "*** Image request failed with error : " << _request->requestResult.readS() << endl;
+			cout << "*** This problem is usually due to the USB port." << endl;
+			cout << "*** Try using a USB2 port instead of USB3." << endl;
+			cout << "*** If running in the external trigger mode, slow trigger signals may cause this." << endl;
+		}
 		return -1;
 	}
+
 
 	if(printstats)
 		print_stats();

@@ -408,21 +408,90 @@ public:
 	// RBG/Gray value. For example 'h = 3' will reduce the image width to 1/4
 	// and 'v = 1' will halve the image height. The last parameters defines
 	// the method used in calculating the resultant pixel value which is one
-	// of 'averaging' or 'summing'. Lastly a negative 'h' or 'v' value corresponds
-	// to dropping the intermediate pixels. See the Bluefox C++ API for more
-	// details. 
+	// of 'averaging = 0', 'summing = 1' or 'dropping = 2'.
+	// See the Bluefox C++ API for more details. 
 	int set_binning_mode(int h, int v, int method){
-		PropertyICameraBinningMode binning;
-		/*
-		if(h == 0 && v == 0)
-			binning = cbmOff;
-		else if(h == 1 && v == 1);
-		*/
+		//PropertyICameraBinningMode binning;
+		mvIMPACT::acquire::TCameraBinningMode binning;
+
+	
+		if((h == 0 && (v == 0 || v == 1 || v == 3)) ||
+		   (h == 1 && (v == 0 || v == 1)) ||
+		   (h == 3 && (v == 0 || v == 3))){
+		} else {
+			cout << "*** Binning Mode [h, v] = [" << h << ", " << v << "] is not valid." << endl;
+			return -1;
+		}
+
+		if(method == 0 || method == 1 || method == 2){
+		} else {
+			cout << "*** Method should be one of {0, 1, 2}." << endl;
+			return -1;
+		}
+			 
+		// Set default to no binning	
+		binning = cbmOff;
+		if(method == 0){
+			if(h == 1 && v == 0)
+				binning = cbmBinningH;
+			else if(h == 0 && v == 1)
+				binning = cbmBinningV;
+			else if(h == 1 && v == 1)
+				binning = cbmBinningHV;
+			else if(h == 3 && v == 0)
+				binning = cbmBinning3H;
+			else if(h == 0 && v == 3)
+				binning = cbmBinning3V;
+			else if(h == 3 && v == 3)
+				binning = cbmBinning3H3V;
+		} else if(method == 1){
+			if(h == 1 && v == 0)
+				binning = cbmBinningHAvg;
+			else if(h == 0 && v == 1)
+				binning = cbmBinningVAvg;
+			else if(h == 1 && v == 1)
+				binning = cbmBinningHVAvg;
+			else if(h == 3 && v == 0)
+				binning = cbmBinning3HAvg;
+			else if(h == 0 && v == 3)
+				binning = cbmBinning3VAvg;
+			else if(h == 3 && v == 3)
+				binning = cbmBinning3H3VAvg;
+		} else if(method == 2){
+			if(h == 1 && v == 0)
+				binning = cbmDroppingH;
+			else if(h == 0 && v == 1)
+				binning = cbmDroppingV;
+			else if(h == 1 && v == 1)
+				binning = cbmDroppingHV;
+			else if(h == 3 && v == 0)
+				binning = cbmDropping3H;
+			else if(h == 0 && v == 3)
+				binning = cbmDropping3V;
+			else if(h == 3 && v == 3)
+				binning = cbmDropping3H3V;
+		}
+		
+		
 		int num_valid_binnings = _settings->cameraSetting.binningMode.dictSize();
-		for(int i = 0 ; i < num_valid_binnings ; i++)
-			cout << "binning[" << i << "] = " << _settings->cameraSetting.binningMode.getTranslationDictString(i) << endl;
-				
-		 _settings->cameraSetting.binningMode.write(cbmBinningH) ;
+		bool valid_binning = false;
+		vector<string> binning_methods;
+		for(int i = 0 ; i < num_valid_binnings ; i++){
+			binning_methods.push_back(_settings->cameraSetting.binningMode.getTranslationDictString(i));
+			if(_settings->cameraSetting.binningMode.getTranslationDictValue(i) == binning){
+				valid_binning = true;
+				break;
+			}
+		}
+			
+		if(valid_binning == false){
+			cout << "*** Binning mode [h, v, method] = [" << h << ", " << v << ", " << method << "] is not supported on this device." << endl;
+			cout << "*** Available binning methods are :" << endl;
+			for(int i = 0 ; i < (int)binning_methods.size() ; i++)
+				cout << "--- [" << i << "] " << binning_methods[i] << endl;  
+			return -1;
+		} else {
+		}
 		return 0;
 	}
 
