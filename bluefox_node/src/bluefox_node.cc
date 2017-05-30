@@ -183,7 +183,7 @@ int main(int argc, char* argv[]){
   bfcam.set_frame_delay_us(_frame_delay);
   bfcam.set_aoi(_aoi_x, _aoi_y, _aoi_width, _aoi_height);
   bfcam.set_binning_mode(_binning_h, _binning_v, _binning_type);
-  
+
   ros::Rate rate(_fps);
 
   cv_bridge::CvImage cv_image;
